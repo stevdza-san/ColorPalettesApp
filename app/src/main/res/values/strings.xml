@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ColorPalettesApp</string>
+    <string name="sign_in_title">Sign in to Continue</string>
+    <string name="sign_in_subtitle">If you want to access this app,\nfirst you need to sign in.</string>
+    <string name="submit_palette">Submit your Palette</string>
+    <string name="submit_description">We would love to see what kind of color palette you have to offer! Submit a color palette and we will notify you after we review and approve your palette.</string>
+    <string name="submit_button">Submit Color Palette</string>
+</resources>
