@@ -29,11 +29,9 @@ class SavedViewModel @Inject constructor(
     init {
         getSavedPalettes()
         viewModelScope.launch {
-            repository.observeSavedPalettes(
-                userObjectId = Backendless.UserService.CurrentUser().objectId
-            ).collect { status ->
+            repository.observeSavedPalettes().collect { status ->
                 _savedPalettes.removeAll {
-                    it.objectId == status?.children?.first()
+                    it.objectId == status?.parentObjectId
                 }
             }
         }

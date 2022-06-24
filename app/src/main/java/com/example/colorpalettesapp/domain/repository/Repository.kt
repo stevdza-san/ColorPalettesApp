@@ -17,7 +17,7 @@ interface Repository {
     suspend fun addLike(paletteObjectId: String, userObjectId: String): Int?
     suspend fun removeLike(paletteObjectId: String, userObjectId: String): Int?
     suspend fun getSavedPalettes(userObjectId: String): List<ColorPalette>
-    suspend fun observeSavedPalettes(userObjectId: String): Flow<RelationStatus?>
+    suspend fun observeSavedPalettes(): Flow<RelationStatus?>
     suspend fun getSubmittedPalettes(userObjectId: String): List<ColorPalette>
     suspend fun observeSubmittedPalettes(userObjectId: String): Flow<ColorPalette>
     suspend fun submitColorPalette(colorPalette: ColorPalette): ColorPalette

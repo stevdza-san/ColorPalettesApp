@@ -5,7 +5,6 @@ import com.backendless.Persistence
 import com.backendless.async.callback.AsyncCallback
 import com.backendless.exceptions.BackendlessFault
 import com.backendless.persistence.DataQueryBuilder
-import com.backendless.persistence.LoadRelationsQueryBuilder
 import com.backendless.rt.data.RelationStatus
 import com.example.colorpalettesapp.domain.model.ColorPalette
 import com.example.colorpalettesapp.domain.model.Users
@@ -143,7 +142,7 @@ class BackendlessDataSourceImpl @Inject constructor(
         userObjectId: String
     ): List<ColorPalette> {
         val query = DataQueryBuilder.create()
-            .setWhereClause("Users[saved].objectId = '$userObjectId' and objectId = '$paletteObjectId'")
+            .setWhereClause("saved.objectId = '$userObjectId' and objectId = '$paletteObjectId'")
 
         return suspendCoroutine { continuation ->
             backendless.of(ColorPalette::class.java).find(
@@ -163,12 +162,10 @@ class BackendlessDataSourceImpl @Inject constructor(
 
     override suspend fun saveColorPalette(paletteObjectId: String, userObjectId: String): Int {
         return suspendCoroutine { continuation ->
-            val user = Users(objectId = userObjectId)
-
-            backendless.of(Users::class.java).addRelation(
-                user,
+            backendless.of(ColorPalette::class.java).addRelation(
+                ColorPalette(objectId = paletteObjectId),
                 "saved",
-                arrayListOf(ColorPalette(objectId = paletteObjectId)),
+                arrayListOf(Users(objectId = userObjectId)),
                 object : AsyncCallback<Int> {
                     override fun handleResponse(response: Int) {
                         continuation.resume(response)
@@ -183,12 +180,10 @@ class BackendlessDataSourceImpl @Inject constructor(
 
     override suspend fun removeColorPalette(paletteObjectId: String, userObjectId: String): Int {
         return suspendCoroutine { continuation ->
-            val user = Users(objectId = userObjectId)
-
-            backendless.of(Users::class.java).deleteRelation(
-                user,
+            backendless.of(ColorPalette::class.java).deleteRelation(
+                ColorPalette(objectId = paletteObjectId),
                 "saved",
-                arrayListOf(ColorPalette(objectId = paletteObjectId)),
+                arrayListOf(Users(objectId = userObjectId)),
                 object : AsyncCallback<Int> {
                     override fun handleResponse(response: Int) {
                         continuation.resume(response)
@@ -238,14 +233,14 @@ class BackendlessDataSourceImpl @Inject constructor(
     }
 
     override suspend fun getSavedPalettes(userObjectId: String): List<ColorPalette> {
-        val relationQuery: LoadRelationsQueryBuilder<ColorPalette> =
-            LoadRelationsQueryBuilder.of(ColorPalette::class.java)
-        relationQuery.setRelationName("saved")
+        val queryBuilder: DataQueryBuilder = DataQueryBuilder.create()
+            .setWhereClause("saved.objectId = '$userObjectId'")
+            .setProperties("Count(likes) as totalLikes", "colors", "approved", "objectId")
+            .setGroupBy("objectId")
 
         return suspendCoroutine { continuation ->
-            Backendless.Data.of(Users::class.java).loadRelations(
-                userObjectId,
-                relationQuery,
+            Backendless.Data.of(ColorPalette::class.java).find(
+                queryBuilder,
                 object : AsyncCallback<List<ColorPalette>> {
                     override fun handleResponse(response: List<ColorPalette>) {
                         continuation.resume(response)
@@ -259,9 +254,9 @@ class BackendlessDataSourceImpl @Inject constructor(
         }
     }
 
-    override suspend fun observeSavedPalettes(userObjectId: String): Flow<RelationStatus?> {
+    override suspend fun observeSavedPalettes(): Flow<RelationStatus?> {
         return callbackFlow {
-            val event = backendless.of(Users::class.java).rt()
+            val event = backendless.of(ColorPalette::class.java).rt()
             val callback = object : AsyncCallback<RelationStatus> {
                 override fun handleResponse(response: RelationStatus?) {
                     trySendBlocking(response)
@@ -273,7 +268,6 @@ class BackendlessDataSourceImpl @Inject constructor(
             }
             event.addDeleteRelationListener(
                 "saved",
-                listOf(userObjectId),
                 callback
             )
             awaitClose {
@@ -285,6 +279,8 @@ class BackendlessDataSourceImpl @Inject constructor(
     override suspend fun getSubmittedPalettes(userObjectId: String): List<ColorPalette> {
         val query = DataQueryBuilder.create()
             .setWhereClause("ownerId = '$userObjectId'")
+            .setProperties("Count(likes) as totalLikes", "colors", "approved", "objectId")
+            .setGroupBy("objectId")
 
         return suspendCoroutine { continuation ->
             backendless.of(ColorPalette::class.java).find(
