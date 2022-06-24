@@ -28,6 +28,7 @@ class BackendlessDataSourceImpl @Inject constructor(
             .setProperties("Count(likes) as totalLikes", "colors", "approved", "objectId")
             .setWhereClause("approved = true")
             .setGroupBy("objectId")
+            .setPageSize(100)
         return suspendCoroutine { continuation ->
             backendless.of(ColorPalette::class.java)
                 .find(queryBuilder, object : AsyncCallback<List<ColorPalette>> {
@@ -237,6 +238,7 @@ class BackendlessDataSourceImpl @Inject constructor(
             .setWhereClause("saved.objectId = '$userObjectId'")
             .setProperties("Count(likes) as totalLikes", "colors", "approved", "objectId")
             .setGroupBy("objectId")
+            .setPageSize(100)
 
         return suspendCoroutine { continuation ->
             Backendless.Data.of(ColorPalette::class.java).find(
@@ -281,6 +283,7 @@ class BackendlessDataSourceImpl @Inject constructor(
             .setWhereClause("ownerId = '$userObjectId'")
             .setProperties("Count(likes) as totalLikes", "colors", "approved", "objectId")
             .setGroupBy("objectId")
+            .setPageSize(100)
 
         return suspendCoroutine { continuation ->
             backendless.of(ColorPalette::class.java).find(
